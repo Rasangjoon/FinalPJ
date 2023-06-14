@@ -1,84 +1,70 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import altair as alt
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import plotly.express as px
-from datetime import datetime
 import plotly.graph_objects as go
+from datetime import datetime
 
 def main():
     df = pd.read_csv('all.csv')
-    st.title('주린이들을 위한 주식추천')
-
+    st.title('주식추천')
     st.subheader('주식 변동 추이')
-
     stocks = sorted(df['Name'].unique())
+    selected_stocks = st.sidebar.multiselect('Select Brands', stocks, default=stocks[0])
 
-    date = sorted(df['Date'].unique())
+    start_date = st.sidebar.date_input('Start Date')
+    end_date = st.sidebar.date_input('End Date')
+    start_date = start_date.strftime('%Y-%m-%d')
+    end_date = end_date.strftime('%Y-%m-%d')
+    fig = go.Figure()
 
-    # 사이드 바에서 종목명과 날짜를 고를 수 있게.
-    selected_stocks = st.sidebar.multiselect('Select Brands', stocks, default=stocks)
-    start_year, end_year = st.sidebar.select_slider('Select Year Range', options=date, value=(date[0], date[-1]))
+    for stock in selected_stocks:
+        stock_data = df[(df['Name'] == stock) & (df['Date'] >= start_date) & (df['Date'] <= end_date)]
+        fig.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['Close'], name=stock,
+                                 hovertemplate='날짜: %{x}<br>주식 가격: %{y:.0f}'))
+        price_diff = stock_data['Close'].diff()
+        color = ['blue' if diff < 0 else 'red' for diff in price_diff]
+        fig.add_trace(go.Bar(x=stock_data['Date'], y=stock_data['High'] - stock_data['Low'],
+                             base=stock_data['Low'], name='Price Range', marker=dict(color=color),
+                             hovertemplate='날짜: %{x}<br>가격 범위: %{y:.0f}'))
 
-    # 선택에 맞게 필터 만들기
-    mask = (
-        df['Name'].isin(selected_stocks) &
-        (df['Date'] >= start_year) & (df['Date'] <= end_year)
-    )
-    df_filtered = df.loc[mask]
-
-    # y_value를 선택하면 나올 수 있게 만들기
-    y_values = st.sidebar.multiselect("Select y value", ["Close", "Open", "High", "Low", "Change", "MA_5", "slow_%K", "slow_%D,","RSI"])
-
-    # 라인 차트에 필터링을 추가
-    line_charts = []
-    for y_value in y_values:
-        chart = alt.Chart(df_filtered).mark_line().encode(
-            x="Date:T",
-            y=alt.Y(y_value + ":Q", title=y_value),
-            color="Name:N"
-        ).properties(
-            width=1000,
-            height=600
+        fig.update_layout(
+            title='주식 가격 변동 추이',
+            xaxis_title='날짜',
+            yaxis_title='주식 가격',
+            hovermode='x',
+            legend=dict(orientation='h', yanchor='bottom', y=1.02),
+            barmode='stack',
+            autosize=False,
+            width=800,
+            height=500
         )
-        line_charts.append(chart)
 
-    combined_chart = alt.vconcat(*line_charts)
-    st.altair_chart(combined_chart)
+    st.plotly_chart(fig)
 
-    
-    #당일 종가 및 전날 대비 등락율 계산
-    df["Change"] = df["Close"].diff()
-    
-    df["Change_pct"] = df["Change"] / df["Close"].shift() * 100
-    # 최신 데이터 가져오기
-    latest_close = df["Close"].iloc[-1]
-    latest_change_pct = df["Change_pct"].iloc[-1]
+    with st.expander('추가 그래프'):
+        st.subheader('추가 그래프 선택')
+        options = ['SLOW STC', 'MA']
+        selected_graphs = st.multiselect('그래프를 선택하세요', options)
 
-    # 등락 여부에 따라 색상 설정
-    if latest_change_pct > 0:
-        change_color = "red"
-    elif latest_change_pct < 0:
-        change_color = "blue"
-    else:
-        change_color = "black"
+        for stock in selected_stocks:
+            stock_data = df[(df['Name'] == stock) & (df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
-    # 당일 종가 메트릭 표시
-    st.metric("Latest Close Price", f"{latest_close:.2f}원")
+            if 'SLOW STC' in selected_graphs:
+                st.subheader(f'SLOW STC - {stock}')
+                fig_slow_stc = go.Figure()
+                fig_slow_stc.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['slow_%K'], name='slow_%K',
+                                                  hovertemplate='날짜: %{x}<br>SLOW %K: %{y:.0f}'))
+                fig_slow_stc.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['slow_%D'], name='slow_%D',
+                                                  hovertemplate='날짜: %{x}<br>SLOW %D: %{y:.0f}'))
+                st.plotly_chart(fig_slow_stc)
 
-    # 전날 대비 등락율 텍스트 표시
-    st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
-    
-    #파이차트: 점수 합 비율을 넣는 것 약간 매수/매도 사인 비슷할 수 있음.
-    # 날씨 이미지(이모지: 크기가 조정 가능할 때), 주가 시계열 데이터 그래프, 전일 종가 데이터, 
-    #CSV로 만든 그래프로 MA-5, CHANGE 보고 5일 합으로 이미지 출력하게 
-    #세영님 코드 참고해서 해보기.
-    
+            if 'MA' in selected_graphs:
+                st.subheader(f'MA - {stock}')
+                fig_ma = go.Figure()
+                fig_ma.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['MA_5'], name='MA_5',
+                                            hovertemplate='날짜: %{x}<br>MA_5: %{y:.0f}'))
+                fig_ma.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['MA_10'], name='MA_10',
+                                            hovertemplate='날짜: %{x}<br>MA_10: %{y:.0f}'))
+                st.plotly_chart(fig_ma)
 
-    
-if __name__ == '__main__' :
+if __name__ == '__main__':
     main()
-#C:\Users\82106\Desktop\workspace\final project\Stock_price (2)\samsung.csv
