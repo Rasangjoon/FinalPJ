@@ -34,11 +34,7 @@ def main():
     with tab12:
         st.markdown(""" 
             #### - 주가데이터의 최근 종가 가격입니다.""")
-        df=pd.read_csv('samsung1.csv')
-        df1=pd.read_csv('Hyundai Motor Company.csv')
-        df2=pd.read_csv('POSCO.csv')
-        df3=pd.read_csv('Celltrion.csv')
-        df4=pd.read_csv('Samsung life Insurance.csv')
+        df=pd.read_csv('all.csv')
         
         #여기다가는 상승 하락을 나타내주는것을 표시하면 어떨까?
         #col1, col2, col3, col4, col5, col6 = st.columns(6)
@@ -64,37 +60,48 @@ def main():
         
         with tab1:
             st.header("삼성전자")
-                #당일 종가 및 전날 대비 등락율 계산
-            df["Change"] = df["Close"].diff()
-            
-            df["Change_pct"] = df["Change"] / df["Close"].shift() * 100
-            # 최신 데이터 가져오기
-            latest_close = df["Close"].iloc[-1]
-            latest_change_pct = df["Change_pct"].iloc[-1]
+            company_name = "Samsung_electronic"
+            df_samsung = df[df["Name"] == company_name]
 
-            # 등락 여부에 따라 색상 설정
-            if latest_change_pct > 0:
-                change_color = "red"
-            elif latest_change_pct < 0:
-                change_color = "blue"
-            else:
-                change_color = "black"
+            if not df_samsung.empty:
+                # 당일 종가 및 전날 대비 등락율 계산
+                df_samsung["Change"] = df_samsung["Close"].diff()
+                df_samsung["Change_pct"] = df_samsung["Change"] / df_samsung["Close"].shift() * 100
 
-            # 당일 종가 메트릭 표시
-            st.metric("Latest Close Price", f"{latest_close:.2f}원")
+                # 최신 데이터 가져오기.
+                latest_close = df_samsung["Close"].iloc[-1]
+                latest_change_pct = df_samsung["Change_pct"].iloc[-1]
+                
+                latest_close_formatted = '{:,.0f}'.format(latest_close)
+                
 
-            # 전날 대비 등락율 텍스트 표시
-            st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
+                # 등락 여부에 따라 색상 설정
+                if latest_change_pct > 0:
+                    change_color = "red"
+                elif latest_change_pct < 0:
+                    change_color = "blue"
+                else:
+                    change_color = "black"
+
+                # 당일 종가 메트릭 표시
+                st.metric("Latest Close Price", f"{latest_close_formatted}원")
+
+                # 전날 대비 등락율 텍스트 표시
+                st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
         
         with tab2:
             st.header("현대차")
+            company_name = "Hyundai Motor Company"
+            df_hyundai = df[df['Name'] == company_name]
             #당일 종가 및 전날 대비 등락율 계산
-            df1["Change"] = df1["Close"].diff()
+            df_hyundai["Change"] = df_hyundai["Close"].diff()
             
-            df1["Change_pct"] = df1["Change"] / df1["Close"].shift() * 100
+            df_hyundai["Change_pct"] = df_hyundai["Change"] / df_hyundai["Close"].shift() * 100
             # 최신 데이터 가져오기
-            latest_close = df1["Close"].iloc[-1]
-            latest_change_pct = df1["Change_pct"].iloc[-1]
+            latest_close = df_hyundai["Close"].iloc[-1]
+            latest_change_pct = df_hyundai["Change_pct"].iloc[-1]
+            
+            latest_close_formatted = '{:,.0f}'.format(latest_close)
 
             # 등락 여부에 따라 색상 설정
             if latest_change_pct > 0:
@@ -105,19 +112,24 @@ def main():
                 change_color = "black"
 
             # 당일 종가 메트릭 표시
-            st.metric("Latest Close Price", f"{latest_close:.2f}원")
+            st.metric("Latest Close Price", f"{latest_close_formatted}원")
 
             # 전날 대비 등락율 텍스트 표시
             st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
             
         with tab3:
             st.header("포스코")
-            df2["Change"] = df2["Close"].diff()
+            company_name = 'POSCO'
+            df_posco = df[df["Name"] == company_name]
+
+            df_posco["Change"] = df_posco["Close"].diff()
             
-            df2["Change_pct"] = df2["Change"] / df2["Close"].shift() * 100
+            df_posco["Change_pct"] = df_posco["Change"] / df_posco["Close"].shift() * 100
             # 최신 데이터 가져오기
-            latest_close = df2["Close"].iloc[-1]
-            latest_change_pct = df2["Change_pct"].iloc[-1]
+            latest_close = df_posco["Close"].iloc[-1]
+            latest_change_pct = df_posco["Change_pct"].iloc[-1]
+            
+            latest_close_formatted = '{:,.0f}'.format(latest_close)
 
             # 등락 여부에 따라 색상 설정
             if latest_change_pct > 0:
@@ -128,19 +140,23 @@ def main():
                 change_color = "black"
 
             # 당일 종가 메트릭 표시
-            st.metric("Latest Close Price", f"{latest_close:.2f}원")
+            st.metric("Latest Close Price", f"{latest_close_formatted}원")
 
             # 전날 대비 등락율 텍스트 표시
             st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
             
         with tab4:
             st.header("셀트리온")
-            df3["Change"] = df3["Close"].diff()
+            company_name = "Celltrion"
+            df_celltrion = df[df["Name"] == company_name]
+            df_celltrion["Change"] = df_celltrion["Close"].diff()
             
-            df3["Change_pct"] = df3["Change"] / df3["Close"].shift() * 100
+            df_celltrion["Change_pct"] = df_celltrion["Change"] / df_celltrion["Close"].shift() * 100
             # 최신 데이터 가져오기
-            latest_close = df3["Close"].iloc[-1]
-            latest_change_pct = df3["Change_pct"].iloc[-1]
+            latest_close = df_celltrion["Close"].iloc[-1]
+            latest_change_pct = df_celltrion["Change_pct"].iloc[-1]
+            
+            latest_close_formatted = '{:,.0f}'.format(latest_close)
 
             # 등락 여부에 따라 색상 설정
             if latest_change_pct > 0:
@@ -151,18 +167,22 @@ def main():
                 change_color = "black"
 
             # 당일 종가 메트릭 표시
-            st.metric("Latest Close Price", f"{latest_close:.2f}원")
+            st.metric("Latest Close Price", f"{latest_close_formatted}원")
 
             # 전날 대비 등락율 텍스트 표시
             st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
         with tab5:
             st.header("삼성생명")
-            df4["Change"] = df4["Close"].diff()
+            company_name = "Samsung life Insurance"
+            df_s_life = df[df["Name"] == company_name]
+            df_s_life["Change"] = df_s_life["Close"].diff()
             
-            df4["Change_pct"] = df4["Change"] / df4["Close"].shift() * 100
+            df_s_life["Change_pct"] = df_s_life["Change"] / df_s_life["Close"].shift() * 100
             # 최신 데이터 가져오기
-            latest_close = df4["Close"].iloc[-1]
-            latest_change_pct = df4["Change_pct"].iloc[-1]
+            latest_close = df_s_life["Close"].iloc[-1]
+            latest_change_pct = df_s_life["Change_pct"].iloc[-1]
+            
+            latest_close_formatted = '{:,.0f}'.format(latest_close)
 
             # 등락 여부에 따라 색상 설정
             if latest_change_pct > 0:
@@ -173,7 +193,7 @@ def main():
                 change_color = "black"
 
             # 당일 종가 메트릭 표시
-            st.metric("Latest Close Price", f"{latest_close:.2f}원")
+            st.metric("Latest Close Price", f"{latest_close_formatted}원")
 
             # 전날 대비 등락율 텍스트 표시
             st.markdown(f"<font color='{change_color}'>Change: {latest_change_pct:.2f}%</font>", unsafe_allow_html=True)
@@ -246,8 +266,6 @@ def main():
     
     #st.header("목적")
     #st.write ("주식 투자 초심자들이 정보탐색 인풋을 줄이고 안정적으로 자산을 운용할 수 있게 돕기 위해")
-
-    
 if __name__ == '__main__' :
     main()
     
